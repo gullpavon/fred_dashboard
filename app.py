@@ -62,6 +62,12 @@ MSACSR = fred.get_series_all_releases('MSACSR')
 fast_filter = (MSACSR.date >= '2020-01-01')
 MSACSR = MSACSR[fast_filter] #  Monthly Supply of Houses in the United States
 
+CSUSHPINSA = fred.get_series_all_releases('CSUSHPINSA') 
+fast_filter = (CSUSHPINSA.date >= '2020-01-01')
+CSUSHPINSA = CSUSHPINSA[fast_filter] #  Monthly Supply of Houses in the United States
+
+
+
 
 #MONEY SUPPLY VS INFLATION
 BOGMBASEW = fred.get_series_all_releases('BOGMBASEW') 
@@ -144,6 +150,7 @@ fig.add_trace(
 # Add figure title
 fig.update_layout(
     title_text="Home Sales Vs Supply"
+   ,title_x=0.5
 )
 
 # Set x-axis title
@@ -221,27 +228,7 @@ app.layout = html.Div( style={'padding-top': '10px',} , children=[
         Dash: A web application framework for Python. 
     '''),
 
-    dcc.Graph(
-        id='MORTGAGE_RATES',
-        figure={
-            'data': [
-                 { "x": MORTGAGE30US['date'],"y": MORTGAGE30US['value'],"mode": "lines","name": '30 YR', 'line': {'color': '#9F86FF' }},
-                 { "x": MORTGAGE15US['date'],"y": MORTGAGE15US['value'],"mode": "lines","name": '15 YR', 'line': {'color': '#1CA8DD'}},
-               
-              
-            ],
-            'layout': {
-                'title': 'MORTGAGE RATES',
-                "paper_bgcolor": "rgb(46, 54, 65)",
-                "plot_bgcolor": "rgb(46, 54, 65)",
-                'font': {
-                    'color': "rgb(255,255,255)"
-                }
-            }
-        }
-       
-    ),
-
+   
 
 
 #     html.H2(children='Money Supply vs. Inflation'),
@@ -249,89 +236,67 @@ app.layout = html.Div( style={'padding-top': '10px',} , children=[
 #####################################################################################################################
 #ROW: HOME PRICING / SUPPLY 
 
+ html.H3('Home Supply vs. Home Sales (United States)'),
+    html.H5("""Mortgages are a huge part of a bank's business; the below gives indication of the health of the mortgage market. 
+    If the below graph is showing a negative trajectory, the bank's mortgage business should be monitored closesly.  """),
+
+
 html.Div([
 
 
 
-html.Div([
- 
+   
+#30yr/15yr Mortage Rates 
+ html.Div([
+ dcc.Graph(
+        id='MORTGAGE_RATES',
+        figure={
+            'data': [
+                 { "x": MORTGAGE30US['date'],"y": MORTGAGE30US['value'],"mode": "lines","name": '30 YR', 'line': {'color': '#9F86FF' }},
+                 { "x": MORTGAGE15US['date'],"y": MORTGAGE15US['value'],"mode": "lines","name": '15 YR', 'line': {'color': '#1CA8DD'}},    
+                    ],
+            'layout': {
+                'title': 'Mortgage Rates',
+                "paper_bgcolor": "rgb(46, 54, 65)",
+                "plot_bgcolor": "rgb(46, 54, 65)",
+                'font': {'color': "rgb(255,255,255)"}
+                    }
+               }
+       
+          )
+          ], className="threehalf columns"),    
+          
 #Home Supply vs. Home Sales
-dcc.Graph(figure=fig),
+ html.Div([
 
-  dcc.Graph(
-        id='home',
+    dcc.Graph(figure=fig),
+          ], className="threehalf columns"),
+
+
+ html.Div([
+ dcc.Graph(
+        id='CSUSHPINSA',
         figure={
             'data': [
-                  { "x": EXHOSLUSM495S['date'],"y": EXHOSLUSM495S['value'], "mode": "lines", "name": 'Existing Home Sales', 'line': {'color': '#9F86FF' }, },
-                  { "x": MSACSR['date'],"y": MSACSR['value'], "mode": "lines", "name": 'Supply of Houses', 'line': {'color': '#1CA8DD' }, 'yaxis':'y2'  }, 
-             
-              
-              
-            ],
+                 { "x": CSUSHPINSA['date'],"y": CSUSHPINSA['value'],"mode": "lines","name": '30 YR', 'line': {'color': '#9F86FF' }},
+                    ],
             'layout': {
-                'title': 'Home Sales Vs Supply',
+                'title': 'U.S. National Home Price Index',
                 "paper_bgcolor": "rgb(46, 54, 65)",
                 "plot_bgcolor": "rgb(46, 54, 65)",
-                'font': {'color': "rgb(255,255,255)"},
-                'yaxis2': {'title':'Supply','side':'right'}
-        
-
-                
-                },
-              #  'yaxis': {'type': 'log', 'autorange': 'true'}, #log functionality 
-            }
-        
+                'font': {'color': "rgb(255,255,255)"}
+                    }
+               }
        
-    ),
-    
-   dcc.Graph(
-        id='home2',
-        figure={
-            'data': [
-                 { "x": EXHOSLUSM495S['date'],"y": EXHOSLUSM495S['value'],"mode": "lines","name": 'Existing Home Sales', 'line': {'color': '#9F86FF' }, },
-                        
-            ],
-            'layout': {
-                'title': 'Home Sales',
-                "paper_bgcolor": "rgb(46, 54, 65)",
-                "plot_bgcolor": "rgb(46, 54, 65)",
-                'font': {'color': "rgb(255,255,255)"},
-                
-                },
-              #  'yaxis': {'type': 'log', 'autorange': 'true'}, #log functionality 
-            }
-        
-       
-    ), 
+          )
+          ], className="threehalf columns"),    
+          
 
 
-      dcc.Graph(
-        id='home3',
-        figure={
-            'data': [
-                 { "x": MSACSR['date'],"y": MSACSR['value'],"mode": "lines","name": 'Existing Home Sales', 'line': {'color': '#9F86FF' }, },
-                        
-            ],
-            'layout': {
-                'title': 'home supply',
-                "paper_bgcolor": "rgb(46, 54, 65)",
-                "plot_bgcolor": "rgb(46, 54, 65)",
-                'font': {'color': "rgb(255,255,255)"},
-                
-                },
-              #  'yaxis': {'type': 'log', 'autorange': 'true'}, #log functionality 
-            }
-        
-       
-    ), 
-     
-    
-     ]),
+          
 
 
-
-
- ], className="row", style={'textAlign': 'center', "width": "100%", "display": "flex", "align-items": "center", "justify-content": "center" }),
+] , className="row", style={'textAlign': 'center', "width": "100%", "display": "flex", "align-items": "center", "justify-content": "center" }),
 
 
 #####################################################################################################################
@@ -430,7 +395,9 @@ html.Div([
 
 ])
 
-if __name__ == '__main__':
+
+# Running the server
+if __name__ == "__main__":
     app.run_server(debug=False)
 
 
@@ -525,14 +492,41 @@ plt.axhline(0, 0, 1, label='0')
 
 
 # %%
-"""Bank Prime Loan Rate (MPRIME)
-Existing Home Sales (EXHOSLUSM495S)
-Monthly Supply of Houses in the United States (MSACSR)
-Real Gross Domestic Product (GDPC1)
+"""
+
+
+##Mortage Watch
+[X] Existing Home Sales (EXHOSLUSM495S)
+[X] Monthly Supply of Houses in the United States (MSACSR)
+[X] S&P/Case-Shiller U.S. National Home Price Index (CSUSHPINSA)
+
 10-Year Treasury Constant Maturity Rate (DGS10)
-Monetary Base; Total (BOGMBASEW)
-M2 Money Stock (M2)
-Consumer Price Index for All Urban Consumers: All Items in U.S. City Average (CPIAUCSL)
+
+###ECONOMY WATCH
+S&P 500 (SP500)
+[X] Monetary Base; Total (BOGMBASEW)
+[X] M2 Money Stock (M2)
+[X] Consumer Price Index for All Urban Consumers: All Items in U.S. City Average (CPIAUCSL)
+Unemployment Rate  (UNRATE)
+Velocity of M2 Money Stock (M2V)
+Real Gross Domestic Product (GDPC1)
+
+###Bank Economy Watch
+Delinquency Rate on Consumer Loans, All Commercial Banks (DRCLACBS)
+Net Interest Margin for all U.S. Banks (USNIM)
+Net Income for Commercial Banks in United States (USNINC)
+Total Reserve Balances Maintained with Federal Reserve Banks (RESBALNS)
+Cash Assets, All Commercial Banks (CASACBW027SBOG)
+Demand Deposits: Total (WDDSL)	
+Loan Loss Reserve to Total Loans for all U.S. Banks (USLLRTL)
+Bank Z-Score for United States (DDSI01USA645NWDB)
+
+##BANK Factors
+Effective Federal Funds Rate (FEDFUNDS) 
+Required Reserves of Depository Institutions (REQRESNS)
+Excess Reserves of Depository Institutions  (EXCSRESNW)
+Bank Prime Loan Rate (MPRIME)
+
 """
 
 
