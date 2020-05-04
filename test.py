@@ -12,6 +12,7 @@ import plotly.graph_objects as go
 get_ipython().run_line_magic('matplotlib', 'inline')
 
 #Stock package
+from yahoo_fin.stock_info import *
 from yahoo_fin import stock_info as si
 
 
@@ -26,8 +27,32 @@ external_stylesheets = ['https://codepen.io/gullpavon1/pen/bGVWQEr.css']
 fred = Fred(api_key=config.fred_api_code)
 
 #Home Data
-EXHOSLUSM495S = fred.get_series('EXHOSLUSM495S').to_frame().reset_index()
-EXHOSLUSM495S = EXHOSLUSM495S.rename(columns={"index": "date", EXHOSLUSM495S.columns[1]: "value"})
-fast_filter = (EXHOSLUSM495S.date >= '2020-01-01')
-EXHOSLUSM495S = EXHOSLUSM495S[fast_filter] 
-EXHOSLUSM495S
+# EXHOSLUSM495S = fred.get_series('EXHOSLUSM495S').to_frame().reset_index()
+# EXHOSLUSM495S = EXHOSLUSM495S.rename(columns={"index": "date", EXHOSLUSM495S.columns[1]: "value"})
+# fast_filter = (EXHOSLUSM495S.date >= '2020-01-01')
+# EXHOSLUSM495S = EXHOSLUSM495S[fast_filter] 
+# # EXHOSLUSM495S
+
+
+# SP500 = fred.get_series('SP500').to_frame().reset_index()
+# SP500 = SP500.rename(columns={"index": "date", SP500.columns[1]: "value"})
+# fast_filter = (SP500.date >= '2020-01-01')
+# SP500 = SP500[fast_filter] 
+# SP500 = SP500.dropna()
+# SP500
+
+# fast_filter = (SP500.date >= '2020-01-01')
+# SP500 = SP500[fast_filter] #SP500 
+
+
+
+ #Wilshire 5000 Total Market Full Cap Index (WILL5000INDFC)
+# WILL5000INDFC = fred.get_series_all_releases('WILL5000INDFC')
+# fast_filter = (WILL5000INDFC.date >= '2020-01-01')
+# WILL5000INDFC = WILL5000INDFC[fast_filter] #Unemployment Rate  
+
+# WILL5000INDFC
+
+xlf_bank_index = get_data('XLF' , start_date = '01/01/2020' ).reset_index().rename(columns={"index": "date"})
+xlf_bank_index = xlf_bank_index[['date','close']]
+xlf_bank_index

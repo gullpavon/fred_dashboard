@@ -13,7 +13,7 @@ get_ipython().run_line_magic('matplotlib', 'inline')
 
 #Stock package
 from yahoo_fin import stock_info as si
-
+from yahoo_fin.stock_info import *
 
 #Plotly Dash components 
 import jupyterlab_dash
@@ -37,6 +37,35 @@ fred = Fred(api_key=config.fred_api_code)
 
 # %%
 ###### GET DATA ########
+
+
+#Econcomy 
+SP500 = fred.get_series('SP500').to_frame().reset_index()
+SP500 = SP500.rename(columns={"index": "date", SP500.columns[1]: "value"})
+fast_filter = (SP500.date >= '2020-01-01')
+SP500 = SP500[fast_filter] 
+SP500 = SP500.dropna()
+SP500#SP500 
+
+
+xlf_bank_index = get_data('XLF' , start_date = '01/01/2020' ).reset_index().rename(columns={"index": "date"})
+xlf_bank_index = xlf_bank_index[['date','close']]
+xlf_bank_index
+
+UNRATE = fred.get_series_all_releases('UNRATE')
+fast_filter = (UNRATE.date >= '2020-01-01')
+UNRATE = UNRATE[fast_filter] #Unemployment Rate   
+
+M2V = fred.get_series_all_releases('M2V')
+fast_filter = (M2V.date >= '2020-01-01')
+M2V = M2V[fast_filter] #Velocity of M2 Money Stock 
+
+GDPC1 = fred.get_series_all_releases('GDPC1')
+fast_filter = (GDPC1.date >= '2020-01-01')
+GDPC1 = GDPC1[fast_filter] #Real Gross Domestic Product 
+
+
+
 
 #Mortgage Rates Data
 MORTGAGE30US = fred.get_series_all_releases('MORTGAGE30US')
@@ -83,6 +112,18 @@ fast_filter = (CPIAUCSL.date >= '2020-01-01')
 CPIAUCSL = CPIAUCSL[fast_filter] #   Consumer Price Index for All Urban Consumers: All Items in U.S. City Average
 
 
+#Bank Factors Data
+FEDFUNDS = fred.get_series_all_releases('FEDFUNDS') 
+fast_filter = (FEDFUNDS.date >= '2020-01-01')
+FEDFUNDS = FEDFUNDS[fast_filter] # Effective Federal Funds Rate
+
+REQRESNS = fred.get_series_all_releases('REQRESNS') 
+fast_filter = (REQRESNS.date >= '2020-01-01')
+REQRESNS = REQRESNS[fast_filter] #  Required Reserves of Depository Institutions 
+
+EXCSRESNW = fred.get_series_all_releases('EXCSRESNW') 
+fast_filter = (EXCSRESNW.date >= '2020-01-01')
+EXCSRESNW = EXCSRESNW[fast_filter] #  Excess Reserves of Depository Institutions
 
 
 
@@ -132,7 +173,7 @@ stock_ticker_style={'background':'#36404e', 'padding-top': '3px','padding-right'
 
 
 # %%
-################# TEST DUAL AXIS WITH DIFF YAXIS RANGES ############
+################# Home Supply Vs Home Prices ############
 
 fig = make_subplots(specs=[[{"secondary_y": True}]])
 
@@ -171,6 +212,49 @@ fig.update_layout(
 
 
     )
+
+
+
+################# SP500 VS BANK Industry ############
+fig2 = make_subplots(specs=[[{"secondary_y": True}]])
+
+# Add traces
+fig2.add_trace(
+   go.Scatter(x=SP500['date'], y=SP500['value'], name="SP500", line=dict(color= '#9F86FF' ), fill='tozeroy', fillcolor='#9F86FF',  opacity=0.1,),
+    secondary_y=False,
+)
+
+fig2.add_trace(
+    go.Scatter(x=xlf_bank_index['date'], y=xlf_bank_index['close'], name="Banks", line=dict(color= '#1CA8DD'), fill='tonexty', fillcolor='#1CA8DD', opacity=0.1,),
+    secondary_y=True,
+)
+
+# Add figure title
+fig2.update_layout(
+    title_text="SP500 Vs. Banking"
+   ,title_x=0.5
+)
+
+# Set x-axis title
+#fig.update_xaxes(title_text="Date")
+
+
+# Set y-axes titles
+fig2.update_yaxes(title_text="<b>SP500</b>", secondary_y=False)
+fig2.update_yaxes(title_text="<b>Banking</b>", secondary_y=True)
+
+fig2.update_layout(
+                 paper_bgcolor = "#2e3641",
+                 plot_bgcolor =  "#2e3641",
+                 font = {"color":"White"},
+                 xaxis =  {'showgrid': False, 'showline': False},
+                 yaxis = {'showgrid': False, 'showline': False},
+                 yaxis2 = {'showgrid': False, 'showline': False},
+
+
+    )
+
+
 
 
 
@@ -234,11 +318,59 @@ app.layout = html.Div( style={'padding-top': '10px',} , children=[
 #     html.H2(children='Money Supply vs. Inflation'),
 
 #####################################################################################################################
+#ROW ECONOMY WATCH:
+html.H3('Economy Watch', style={'text-align': 'center'}),
+html.H5("""Banks are heavily correlated with the economy.The banking sector is an industry and a 
+section of the economy devoted to the holding of financial assets for others and investing those 
+financial assets as a leveraged way to create more wealth. The sector also includes the regulation 
+of banking activities by government agencies, insurance, mortgages, investor services
+, and credit cards.""", style={'text-align': 'center'}),
+html.Div([
+
+html.Div([
+
+
+ dcc.Graph(
+        id='SP500',
+        figure={
+            'data': [
+                 { "x": SP500['date'],"y": SP500['value'],"mode": "lines","name": '30 YR', 'line': {'color': '#9F86FF' }},
+                      ],
+            'layout': {
+                'title': 'SP 500',
+                "paper_bgcolor": "rgb(46, 54, 65)",
+                "plot_bgcolor": "rgb(46, 54, 65)",
+                'font': {'color': "rgb(255,255,255)"},
+                'tickangle': '90',
+
+                    }
+               }
+       
+          ),
+
+    html.Div([
+
+    dcc.Graph(figure=fig2),
+          ], className="twelve columns"),
+
+
+
+
+          ], ),   
+# S&P 500 (SP500)
+# Unemployment Rate  (UNRATE)
+# Velocity of M2 Money Stock (M2V)
+# Real Gross Domestic Product (GDPC1)
+
+
+] , className="row", style={'textAlign': 'center', "width": "100%", "display": "flex", "align-items": "center", "justify-content": "center" }),
+
+#####################################################################################################################
 #ROW: HOME PRICING / SUPPLY 
 
- html.H3('Home Supply vs. Home Sales (United States)'),
-    html.H5("""Mortgages are a huge part of a bank's business; the below gives indication of the health of the mortgage market. 
-    If the below graph is showing a negative trajectory, the bank's mortgage business should be monitored closesly.  """),
+html.H3('Mortgage Watch', style={'text-align': 'center'}),
+html.H5("""Mortgages are a huge part of a bank's business; the below gives indication of the health of the mortgage market. 
+    If the below graph(s) is showing a negative trajectory, the bank's mortgage business should be monitored closesly.  """, style={'text-align': 'center'}),
 
 
 html.Div([
@@ -259,7 +391,9 @@ html.Div([
                 'title': 'Mortgage Rates',
                 "paper_bgcolor": "rgb(46, 54, 65)",
                 "plot_bgcolor": "rgb(46, 54, 65)",
-                'font': {'color': "rgb(255,255,255)"}
+                'font': {'color': "rgb(255,255,255)"},
+                'tickangle': '90',
+
                     }
                }
        
@@ -300,6 +434,83 @@ html.Div([
 
 
 #####################################################################################################################
+#ROW: Bank Factors
+
+html.H3('Bank Factors Watch', style={'text-align': 'center'}),
+html.H5("""The below metrics help showcase some factors that may affect a bank's health. Banks are required by the 
+    Federal Reserve to maintain money at the Federal Reserve Bank. This is to mitigate bank runs, finacial crisis stressors, 
+    and overall ensure bank's can withstand downturns. However this can be seen as a double edge sword, for every dollar that is
+    locked up at the federal reserve, means that money cannot be put into other investments, and ultimately can slow the bank's
+    overall growth. The Fed may implement lower reserve requirments in tiumes of downturns to reduce the bank's risk of folding due 
+    to lack of access to capuital. During Covid-19 the Fed has reduced the requirements to 0%. """, style={'text-align': 'center'}),
+
+
+html.Div([
+
+ html.Div([
+ dcc.Graph(
+        id='FEDFUNDS',
+        figure={
+            'data': [
+                 { "x": FEDFUNDS['date'],"y": FEDFUNDS['value'],"mode": "lines","name": 'Rate', 'line': {'color': '#9F86FF' }},
+                    ],
+            'layout': {
+                'title': ' Federal Funds Rate',
+                "paper_bgcolor": "rgb(46, 54, 65)",
+                "plot_bgcolor": "rgb(46, 54, 65)",
+                'font': {'color': "rgb(255,255,255)"}
+                    }
+               }
+       
+          )
+          ], className="threehalf columns"),    
+          
+ html.Div([
+ dcc.Graph(
+        id='REQRESNS',
+        figure={
+            'data': [
+                 { "x": REQRESNS['date'],"y": REQRESNS['value'],"mode": "lines","name": 'Reserves', 'line': {'color': '#9F86FF' }},
+                    ],
+            'layout': {
+                'title': 'Required Reserves of Depository Institutions',
+                "paper_bgcolor": "rgb(46, 54, 65)",
+                "plot_bgcolor": "rgb(46, 54, 65)",
+                'font': {'color': "rgb(255,255,255)"}
+                    }
+               }
+       
+          )
+          ], className="threehalf columns"),    
+          
+html.Div([
+ dcc.Graph(
+        id='EXCSRESNW',
+        figure={
+            'data': [
+                 { "x": EXCSRESNW['date'],"y": EXCSRESNW['value'],"mode": "lines","name": 'Excess Reserves', 'line': {'color': '#9F86FF' }},
+                    ],
+            'layout': {
+                'title': 'Excess Reserves of Depository Institutions',
+                "paper_bgcolor": "rgb(46, 54, 65)",
+                "plot_bgcolor": "rgb(46, 54, 65)",
+                'font': {'color': "rgb(255,255,255)"}
+                    }
+               }
+       
+          )
+          ], className="threehalf columns"),    
+          
+
+
+
+] , className="row", style={'textAlign': 'center', "width": "100%", "display": "flex", "align-items": "center", "justify-content": "center" }),
+
+
+
+##################################################################################################################################
+
+
 #ROW 2 
 html.Div([
 
@@ -403,92 +614,92 @@ if __name__ == "__main__":
 
 
 
-# %%
-#30 Yr Mortgage Rates
-MORTGAGE30US.plot.line(x='date', y='value')
-plt.title ('30 Yr Mortgage Rates')
-plt.xlabel ('Date')
-plt.ylabel ('Rate')
+# # %%
+# #30 Yr Mortgage Rates
+# MORTGAGE30US.plot.line(x='date', y='value')
+# plt.title ('30 Yr Mortgage Rates')
+# plt.xlabel ('Date')
+# plt.ylabel ('Rate')
 
 
-# %%
+# # %%
 
-#Unemployment Rate
-#For Unemployment number use: UNEMPLOY
-UNRATE = fred.get_series_all_releases('UNRATE')
-UNRATE = UNRATE[UNRATE.date >= '2019-01-01']
+# #Unemployment Rate
+# #For Unemployment number use: UNEMPLOY
+# UNRATE = fred.get_series_all_releases('UNRATE')
+# UNRATE = UNRATE[UNRATE.date >= '2019-01-01']
 
-UNRATE.plot.line(x='date', y='value')
-plt.title ('Unemployment Rate')
-plt.xlabel ('Date')
-plt.ylabel ('Rate')
-
-
-# %%
+# UNRATE.plot.line(x='date', y='value')
+# plt.title ('Unemployment Rate')
+# plt.xlabel ('Date')
+# plt.ylabel ('Rate')
 
 
-#Fed Funds Rate
-FEDFUNDS = fred.get_series_all_releases('FEDFUNDS')
-FEDFUNDS = FEDFUNDS[FEDFUNDS.date >= '2019-01-01']
-
-FEDFUNDS.plot.line(x='date', y='value')
-plt.title ('Federal Funds Rate')
-plt.xlabel ('Date')
-plt.ylabel ('Rate')
+# # %%
 
 
-# %%
+# #Fed Funds Rate
+# FEDFUNDS = fred.get_series_all_releases('FEDFUNDS')
+# FEDFUNDS = FEDFUNDS[FEDFUNDS.date >= '2019-01-01']
 
-#10-2 Treasury Yield Spread
-T10Y2Y = fred.get_series_all_releases('T10Y2Y')
-T10Y2Y = T10Y2Y[T10Y2Y.date >= '2019-01-01']
-T10Y2Y.dropna(inplace= True)
-
-T10Y2Y.plot.line(x='date', y='value')
-plt.title ('10-Year Treasury Constant Maturity Minus 2-Year Treasury Constant Maturity ')
-plt.xlabel ('Date')
-plt.ylabel ('Rate')
-plt.axhline(0, 0, 1, label='0')
+# FEDFUNDS.plot.line(x='date', y='value')
+# plt.title ('Federal Funds Rate')
+# plt.xlabel ('Date')
+# plt.ylabel ('Rate')
 
 
-# %%
-#10-2 Treasury Yield Spread
-T10YIE = fred.get_series_all_releases('T10YIE')
-T10YIE = T10YIE[T10YIE.date >= '2020-01-01']
-T10YIE.dropna(inplace= True)
+# # %%
+
+# #10-2 Treasury Yield Spread
+# T10Y2Y = fred.get_series_all_releases('T10Y2Y')
+# T10Y2Y = T10Y2Y[T10Y2Y.date >= '2019-01-01']
+# T10Y2Y.dropna(inplace= True)
+
+# T10Y2Y.plot.line(x='date', y='value')
+# plt.title ('10-Year Treasury Constant Maturity Minus 2-Year Treasury Constant Maturity ')
+# plt.xlabel ('Date')
+# plt.ylabel ('Rate')
+# plt.axhline(0, 0, 1, label='0')
 
 
-T10YIE.plot.line(x='date', y='value')
-plt.title ('10-Year Breakeven Inflation Rate')
-plt.xlabel ('Date')
-plt.ylabel ('Rate')
-plt.axhline(0, 0, 1, label='0')
+# # %%
+# #10-2 Treasury Yield Spread
+# T10YIE = fred.get_series_all_releases('T10YIE')
+# T10YIE = T10YIE[T10YIE.date >= '2020-01-01']
+# T10YIE.dropna(inplace= True)
 
 
-# %%
-
-CSUSHPINSA = fred.get_series_all_releases('CSUSHPINSA')
-CSUSHPINSA = CSUSHPINSA[CSUSHPINSA.date >= '2019-01-01']
-CSUSHPINSA.dropna(inplace= True)
-CSUSHPINSA.plot.line(x='date', y='value')
-
-plt.title ('S&P/Case-Shiller U.S. National Home Price Index')
-plt.xlabel ('Date')
-plt.ylabel ('Rate')
-plt.axhline(0, 0, 1, label='0')
+# T10YIE.plot.line(x='date', y='value')
+# plt.title ('10-Year Breakeven Inflation Rate')
+# plt.xlabel ('Date')
+# plt.ylabel ('Rate')
+# plt.axhline(0, 0, 1, label='0')
 
 
-# %%
+# # %%
 
-IOER = fred.get_series_all_releases('IOER')
-IOER = IOER[IOER.date >= '2019-01-01']
-IOER.dropna(inplace= True)
-IOER.plot.line(x='date', y='value')
+# CSUSHPINSA = fred.get_series_all_releases('CSUSHPINSA')
+# CSUSHPINSA = CSUSHPINSA[CSUSHPINSA.date >= '2019-01-01']
+# CSUSHPINSA.dropna(inplace= True)
+# CSUSHPINSA.plot.line(x='date', y='value')
 
-plt.title ('Interest Rate on Excess Reserves')
-plt.xlabel ('Date')
-plt.ylabel ('Rate')
-plt.axhline(0, 0, 1, label='0')
+# plt.title ('S&P/Case-Shiller U.S. National Home Price Index')
+# plt.xlabel ('Date')
+# plt.ylabel ('Rate')
+# plt.axhline(0, 0, 1, label='0')
+
+
+# # %%
+
+# IOER = fred.get_series_all_releases('IOER')
+# IOER = IOER[IOER.date >= '2019-01-01']
+# IOER.dropna(inplace= True)
+# IOER.plot.line(x='date', y='value')
+
+# plt.title ('Interest Rate on Excess Reserves')
+# plt.xlabel ('Date')
+# plt.ylabel ('Rate')
+# plt.axhline(0, 0, 1, label='0')
 
 
 # %%
@@ -503,13 +714,18 @@ plt.axhline(0, 0, 1, label='0')
 10-Year Treasury Constant Maturity Rate (DGS10)
 
 ###ECONOMY WATCH
-S&P 500 (SP500)
+
 [X] Monetary Base; Total (BOGMBASEW)
 [X] M2 Money Stock (M2)
 [X] Consumer Price Index for All Urban Consumers: All Items in U.S. City Average (CPIAUCSL)
+
+S&P 500 (SP500)
+Wilshire 5000 Total Market Full Cap Index (WILL5000INDFC)
 Unemployment Rate  (UNRATE)
 Velocity of M2 Money Stock (M2V)
 Real Gross Domestic Product (GDPC1)
+
+
 
 ###Bank Economy Watch
 Delinquency Rate on Consumer Loans, All Commercial Banks (DRCLACBS)
