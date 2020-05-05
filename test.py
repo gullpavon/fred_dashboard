@@ -53,6 +53,12 @@ fred = Fred(api_key=config.fred_api_code)
 
 # WILL5000INDFC
 
-xlf_bank_index = get_data('XLF' , start_date = '01/01/2020' ).reset_index().rename(columns={"index": "date"})
-xlf_bank_index = xlf_bank_index[['date','close']]
-xlf_bank_index
+# xlf_bank_index = get_data('XLF' , start_date = '01/01/2020' ).reset_index().rename(columns={"index": "date"})
+# xlf_bank_index = xlf_bank_index[['date','close']]
+# xlf_bank_index
+
+M2V = fred.get_series_all_releases('M2V')
+fast_filter = (M2V.date >= '2020-01-01')
+M2V = M2V[fast_filter] #Velocity of M2 Money Stock 
+
+M2V

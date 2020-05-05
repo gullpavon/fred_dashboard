@@ -1,6 +1,7 @@
 # To add a new cell, type '# %%'
 # To add a new markdown cell, type '# %% [markdown]'
 
+# %%
 from IPython import get_ipython
 import config
 import helpers
@@ -35,7 +36,6 @@ fred = Fred(api_key=config.fred_api_code)
 
 
 
-# %%
 ###### GET DATA ########
 
 
@@ -57,13 +57,49 @@ fast_filter = (UNRATE.date >= '2020-01-01')
 UNRATE = UNRATE[fast_filter] #Unemployment Rate   
 
 M2V = fred.get_series_all_releases('M2V')
-fast_filter = (M2V.date >= '2020-01-01')
+fast_filter = (M2V.date >= '2019-01-01')
 M2V = M2V[fast_filter] #Velocity of M2 Money Stock 
 
 GDPC1 = fred.get_series_all_releases('GDPC1')
-fast_filter = (GDPC1.date >= '2020-01-01')
+fast_filter = (GDPC1.date >= '2019-01-01')
 GDPC1 = GDPC1[fast_filter] #Real Gross Domestic Product 
 
+
+
+###Bank Economy Watch
+
+USNIM = fred.get_series_all_releases('USNIM')
+fast_filter = (USNIM.date >= '2020-01-01')
+USNIM = USNIM[fast_filter] #Net Interest Margin for all U.S. Banks 
+
+USNINC = fred.get_series_all_releases('USNINC')
+fast_filter = (USNINC.date >= '2020-01-01')
+USNINC = USNINC[fast_filter] #Net Income for Commercial Banks in United States 
+
+DDSI01USA645NWDB = fred.get_series_all_releases('DDSI01USA645NWDB')
+fast_filter = (DDSI01USA645NWDB.date >= '2020-01-01')
+DDSI01USA645NWDB = DDSI01USA645NWDB[fast_filter] #Bank Z-Score for United States
+
+DRCLACBS = fred.get_series_all_releases('DRCLACBS')
+fast_filter = (DRCLACBS.date >= '2020-01-01')
+DRCLACBS = DRCLACBS[fast_filter] #Delinquency Rate on Consumer Loans, All Commercial Banks 
+
+RESBALNS = fred.get_series_all_releases('RESBALNS')
+fast_filter = (RESBALNS.date >= '2020-01-01')
+RESBALNS = RESBALNS[fast_filter] #Total Reserve Balances Maintained with Federal Reserve Banks
+
+
+USLLRTL = fred.get_series_all_releases('USLLRTL')
+fast_filter = (USLLRTL.date >= '2020-01-01')
+USLLRTL = USLLRTL[fast_filter] #Loan Loss Reserve to Total Loans for all U.S. Banks
+
+CASACBW027SBOG = fred.get_series_all_releases('CASACBW027SBOG')
+fast_filter = (CASACBW027SBOG.date >= '2020-01-01')
+CASACBW027SBOG = CASACBW027SBOG[fast_filter] #Cash Assets, All Commercial Banks (
+
+WDDSL = fred.get_series_all_releases('WDDSL')
+fast_filter = (WDDSL.date >= '2020-01-01')
+WDDSL = WDDSL[fast_filter] #Demand Deposits: Total 
 
 
 
@@ -151,28 +187,12 @@ def color_picker(value_input):
         return '#ef3b46'
 
 
-# %%
 
-# x = MORTGAGE30US['date']
-# x2 = MORTGAGE30US['date'].astype(np.int64)
-# y = MORTGAGE30US['value']
-
-# data = go.Scatter(x=x, y=y, mode='lines+markers', marker={'color': x2, 'colorscale': 'Rainbow', 'size': 10},)
-
-# layout = dict(plot_bgcolor='white', margin=dict(t=0, b=0, r=0, l=0, pad=0),
-#               xaxis=dict(showgrid=False, zeroline=False, mirror=True, linecolor='gray'),
-#               yaxis=dict(showgrid=False, zeroline=False, mirror=True, linecolor='gray'))
-
-# fig = go.Figure(data=data, layout=layout)
-
-
-# %%
 #Styling / CSS Stuff 
 
 stock_ticker_style={'background':'#36404e', 'padding-top': '3px','padding-right':'6px','padding-bottom':'3px', 'padding-left': '6px', }
 
 
-# %%
 ################# Home Supply Vs Home Prices ############
 
 fig = make_subplots(specs=[[{"secondary_y": True}]])
@@ -220,12 +240,12 @@ fig2 = make_subplots(specs=[[{"secondary_y": True}]])
 
 # Add traces
 fig2.add_trace(
-   go.Scatter(x=SP500['date'], y=SP500['value'], name="SP500", line=dict(color= '#9F86FF' ), fill='tozeroy', fillcolor='#9F86FF',  opacity=0.1,),
+   go.Scatter(x=SP500['date'], y=SP500['value'], name="SP500", line=dict(color= '#9F86FF' ), fill='tozeroy', fillcolor='rgba(159,134,255, 0.8)',  opacity=0.8,),
     secondary_y=False,
 )
 
 fig2.add_trace(
-    go.Scatter(x=xlf_bank_index['date'], y=xlf_bank_index['close'], name="Banks", line=dict(color= '#1CA8DD'), fill='tonexty', fillcolor='#1CA8DD', opacity=0.1,),
+    go.Scatter(x=xlf_bank_index['date'], y=xlf_bank_index['close'], name="Banks", line=dict(color= '#1CA8DD'), fill='tozeroy', fillcolor='rgba(28,168,221, 0.8)', opacity=0.8,),
     secondary_y=True,
 )
 
@@ -319,25 +339,34 @@ app.layout = html.Div( style={'padding-top': '10px',} , children=[
 
 #####################################################################################################################
 #ROW ECONOMY WATCH:
+
+html.Div([
+
+html.Div([
+
 html.H3('Economy Watch', style={'text-align': 'center'}),
 html.H5("""Banks are heavily correlated with the economy.The banking sector is an industry and a 
 section of the economy devoted to the holding of financial assets for others and investing those 
 financial assets as a leveraged way to create more wealth. The sector also includes the regulation 
 of banking activities by government agencies, insurance, mortgages, investor services
 , and credit cards.""", style={'text-align': 'center'}),
-html.Div([
+
+    html.Div([
+
+    dcc.Graph(figure=fig2),
+          ], className="eleven columns"),
+
+
 
 html.Div([
-
-
  dcc.Graph(
-        id='SP500',
+        id='UNRATE',
         figure={
             'data': [
-                 { "x": SP500['date'],"y": SP500['value'],"mode": "lines","name": '30 YR', 'line': {'color': '#9F86FF' }},
-                      ],
+                     { "x": UNRATE['date'],"y": UNRATE['value'],"mode": "lines","name": 'Rate', 'line': {'color': '#1CA8DD'}},    
+                    ],
             'layout': {
-                'title': 'SP 500',
+                'title': 'Unemployment Rate',
                 "paper_bgcolor": "rgb(46, 54, 65)",
                 "plot_bgcolor": "rgb(46, 54, 65)",
                 'font': {'color': "rgb(255,255,255)"},
@@ -346,24 +375,293 @@ html.Div([
                     }
                }
        
-          ),
+          )
+          ], className="threehalf columns"),   
 
-    html.Div([
+html.Div([
+dcc.Graph(
+        id='M2V',
+        figure={
+            'data': [
+                     { "x": M2V['date'],"y": M2V['value'],"mode": "lines","name": 'Velocity', 'line': {'color': '#1CA8DD'}},    
+                    ],
+            'layout': {
+                'title': 'Velocity of M2 Money Stock',
+                "paper_bgcolor": "rgb(46, 54, 65)",
+                "plot_bgcolor": "rgb(46, 54, 65)",
+                'font': {'color': "rgb(255,255,255)"},
+                'tickangle': '90',
 
-    dcc.Graph(figure=fig2),
-          ], className="twelve columns"),
+                    }
+               }
+       
+          )
+          ], className="threehalf columns"),   
+
+html.Div([
+dcc.Graph(
+        id='GDPC1',
+        figure={
+            'data': [
+                     { "x": GDPC1['date'],"y": GDPC1['value'],"mode": "lines","name": 'GDP', 'line': {'color': '#1CA8DD'}},    
+                    ],
+            'layout': {
+                'title': 'Real Gross Domestic Product ',
+                "paper_bgcolor": "rgb(46, 54, 65)",
+                "plot_bgcolor": "rgb(46, 54, 65)",
+                'font': {'color': "rgb(255,255,255)"},
+                'tickangle': '90',
+
+                    }
+               }
+       
+          )
+          ], className="threehalf columns"),   
+
+
+
 
 
 
 
           ], ),   
-# S&P 500 (SP500)
-# Unemployment Rate  (UNRATE)
-# Velocity of M2 Money Stock (M2V)
-# Real Gross Domestic Product (GDPC1)
 
 
 ] , className="row", style={'textAlign': 'center', "width": "100%", "display": "flex", "align-items": "center", "justify-content": "center" }),
+
+
+#####################################################################################################################
+#ROW BANK ECONOMY WATCH:
+
+html.Div([
+
+html.Div([
+
+html.H3('Bank Economy Watch', style={'text-align': 'center'}),
+html.H5("""blah blah b lah blahj fpoksdnfg poksndg odshg pdsfngop dshg;kdshidsf;gj dskgnsdkng;dfkjgdfg
+dfjkngdsflkjng dsjng ldsjgdl skg sdlkjngldksjgnlas;f dsjknflsda flkasjnfliasdbflasjibflasijfbasdfsdkjafbh 
+nsdfkjsdb fkjsb fsadjbf lasjbflksajbdfaisjbfoaisdfosdfho saifiawfjewibfiuawfliaw fusb fuisw faewb kjhvku.""", style={'text-align': 'center'}),
+
+
+
+
+
+html.Div([
+ dcc.Graph(
+        id='USNIM',
+        figure={
+            'data': [
+                     { "x": USNIM['date'],"y": USNIM['value'],"mode": "lines","name": 'Net Int Margin', 'line': {'color': '#1CA8DD'}},    
+                    ],
+            'layout': {
+                'title': 'NIM for all U.S. Banks ',
+                "paper_bgcolor": "rgb(46, 54, 65)",
+                "plot_bgcolor": "rgb(46, 54, 65)",
+                'font': {'color': "rgb(255,255,255)"},
+                'tickangle': '90',
+
+                    }
+               }
+       
+          )
+          ], className="threehalf columns"),   
+
+html.Div([
+dcc.Graph(
+        id='USNINC',
+        figure={
+            'data': [
+                     { "x": USNINC['date'],"y": USNINC['value'],"mode": "lines","name": 'Income', 'line': {'color': '#1CA8DD'}},    
+                    ],
+            'layout': {
+                'title': 'NII Commercial Banks in United States',
+                "paper_bgcolor": "rgb(46, 54, 65)",
+                "plot_bgcolor": "rgb(46, 54, 65)",
+                'font': {'color': "rgb(255,255,255)"},
+                'tickangle': '90',
+
+                    }
+               }
+       
+          )
+          ], className="threehalf columns"),   
+
+html.Div([
+dcc.Graph(
+        id='DDSI01USA645NWDB',
+        figure={
+            'data': [
+                     { "x": DDSI01USA645NWDB['date'],"y": DDSI01USA645NWDB['value'],"mode": "lines","name": 'Z-Score', 'line': {'color': '#1CA8DD'}},    
+                    ],
+            'layout': {
+                'title': 'Bank Z-Score for United States',
+                "paper_bgcolor": "rgb(46, 54, 65)",
+                "plot_bgcolor": "rgb(46, 54, 65)",
+                'font': {'color': "rgb(255,255,255)"},
+                'tickangle': '90',
+
+                    }
+               }
+       
+          )
+          ], className="threehalf columns"),   
+
+
+
+
+
+
+
+          ], ),   
+
+
+] , className="row", style={'textAlign': 'center', "width": "100%", "display": "flex", "align-items": "center", "justify-content": "center" }),
+
+
+####BANK ENCONOMY ROW 2
+
+
+
+
+#Cash Assets, All Commercial Banks (CASACBW027SBOG)
+#Demand Deposits: Total (WDDSL)	
+
+
+html.Div([
+
+
+
+html.Div([
+ dcc.Graph(
+        id='DRCLACBS',
+        figure={
+            'data': [
+                     { "x": DRCLACBS['date'],"y": DRCLACBS['value'],"mode": "lines","name": 'Rate', 'line': {'color': '#1CA8DD'}},    
+                    ],
+            'layout': {
+                'title': 'Delinq. Rate on Consumer Loans ',
+                "paper_bgcolor": "rgb(46, 54, 65)",
+                "plot_bgcolor": "rgb(46, 54, 65)",
+                'font': {'color': "rgb(255,255,255)"},
+                'tickangle': '90',
+
+                    }
+               }
+       
+          )
+          ], className="threehalf columns"),   
+
+html.Div([
+dcc.Graph(
+        id='RESBALNS',
+        figure={
+            'data': [
+                     { "x": RESBALNS['date'],"y": RESBALNS['value'],"mode": "lines","name": 'Balance', 'line': {'color': '#1CA8DD'}},    
+                    ],
+            'layout': {
+                'title': 'Reserve Balances Maintained with Fed',
+                "paper_bgcolor": "rgb(46, 54, 65)",
+                "plot_bgcolor": "rgb(46, 54, 65)",
+                'font': {'color': "rgb(255,255,255)"},
+                'tickangle': '90',
+
+                    }
+               }
+       
+          )
+          ], className="threehalf columns"),   
+
+html.Div([
+dcc.Graph(
+        id='USLLRTL',
+        figure={
+            'data': [
+                     { "x": USLLRTL['date'],"y": USLLRTL['value'],"mode": "lines","name": 'Ratio', 'line': {'color': '#1CA8DD'}},    
+                    ],
+            'layout': {
+                'title': 'Loan Loss Reserve to Total Loans for all U.S. Banks',
+                "paper_bgcolor": "rgb(46, 54, 65)",
+                "plot_bgcolor": "rgb(46, 54, 65)",
+                'font': {'color': "rgb(255,255,255)"},
+                'tickangle': '90',
+
+                    }
+               }
+       
+          )
+          ], className="threehalf columns"),   
+
+
+
+
+
+
+] , className="row", style={'textAlign': 'center', "width": "100%", "display": "flex", "align-items": "center", "justify-content": "center" }),
+
+
+
+####BANK ENCONOMY ROW 3
+
+
+
+
+
+
+html.Div([
+
+
+
+html.Div([
+dcc.Graph(
+        id='CASACBW027SBOG',
+        figure={
+            'data': [
+                     { "x": CASACBW027SBOG['date'],"y": CASACBW027SBOG['value'],"mode": "lines","name": 'Balance', 'line': {'color': '#1CA8DD'}},    
+                    ],
+            'layout': {
+                'title': 'Cash Assets, All Commercial Banks',
+                "paper_bgcolor": "rgb(46, 54, 65)",
+                "plot_bgcolor": "rgb(46, 54, 65)",
+                'font': {'color': "rgb(255,255,255)"},
+                'tickangle': '90',
+
+                    }
+               }
+       
+          )
+          ], className="two columns"),   
+
+html.Div([
+dcc.Graph(
+        id='WDDSL',
+        figure={
+            'data': [
+                     { "x": WDDSL['date'],"y": WDDSL['value'],"mode": "lines","name": 'Balance', 'line': {'color': '#1CA8DD'}},    
+                    ],
+            'layout': {
+                'title': 'Demand Deposits: Total ',
+                "paper_bgcolor": "rgb(46, 54, 65)",
+                "plot_bgcolor": "rgb(46, 54, 65)",
+                'font': {'color': "rgb(255,255,255)"},
+                'tickangle': '90',
+
+                    }
+               }
+       
+          )
+          ], className="two columns"),   
+
+
+
+
+
+
+] , className="row", style={'textAlign': 'center', "width": "100%", "display": "flex", "align-items": "center", "justify-content": "center" }),
+
+
+
+
+
 
 #####################################################################################################################
 #ROW: HOME PRICING / SUPPLY 
@@ -719,23 +1017,30 @@ if __name__ == "__main__":
 [X] M2 Money Stock (M2)
 [X] Consumer Price Index for All Urban Consumers: All Items in U.S. City Average (CPIAUCSL)
 
-S&P 500 (SP500)
-Wilshire 5000 Total Market Full Cap Index (WILL5000INDFC)
-Unemployment Rate  (UNRATE)
-Velocity of M2 Money Stock (M2V)
-Real Gross Domestic Product (GDPC1)
+[x] S&P 500 (SP500)
+[x] Banking Sector 
+[NA] Wilshire 5000 Total Market Full Cap Index (WILL5000INDFC)
+[X] Unemployment Rate  (UNRATE)
+[X] Velocity of M2 Money Stock (M2V)
+[X] Real Gross Domestic Product (GDPC1)
 
 
 
 ###Bank Economy Watch
-Delinquency Rate on Consumer Loans, All Commercial Banks (DRCLACBS)
+
 Net Interest Margin for all U.S. Banks (USNIM)
 Net Income for Commercial Banks in United States (USNINC)
+Bank Z-Score for United States (DDSI01USA645NWDB)
+
+
+Delinquency Rate on Consumer Loans, All Commercial Banks (DRCLACBS)
 Total Reserve Balances Maintained with Federal Reserve Banks (RESBALNS)
+Loan Loss Reserve to Total Loans for all U.S. Banks (USLLRTL)
+
 Cash Assets, All Commercial Banks (CASACBW027SBOG)
 Demand Deposits: Total (WDDSL)	
-Loan Loss Reserve to Total Loans for all U.S. Banks (USLLRTL)
-Bank Z-Score for United States (DDSI01USA645NWDB)
+
+
 
 ##BANK Factors
 Effective Federal Funds Rate (FEDFUNDS) 
@@ -744,6 +1049,7 @@ Excess Reserves of Depository Institutions  (EXCSRESNW)
 Bank Prime Loan Rate (MPRIME)
 
 """
+
 
 
 # %%
