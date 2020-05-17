@@ -3,6 +3,7 @@
 
 # %%
 from IPython import get_ipython
+from datetime import datetime
 import config
 import helpers
 import pandas as pd
@@ -10,11 +11,16 @@ import numpy as np
 from fredapi import Fred
 import matplotlib.pyplot as plt
 from IPython.core.pylabtools import figsize
+from datetime import timedelta, date
 get_ipython().run_line_magic('matplotlib', 'inline')
 
 #Stock package
 from yahoo_fin import stock_info as si
 from yahoo_fin.stock_info import *
+
+#e U.S. Department of Labor API
+from pydol import DOLAPI
+DOL = DOLAPI(config.dep_labor_code)
 
 #Plotly Dash components 
 import jupyterlab_dash
@@ -50,7 +56,11 @@ SP500#SP500
 
 xlf_bank_index = get_data('XLF' , start_date = '01/01/2020' ).reset_index().rename(columns={"index": "date"})
 xlf_bank_index = xlf_bank_index[['date','close']]
-xlf_bank_index
+xlf_bank_index #SP500 financial stocks - method 1
+
+BKX = get_data('^BKX' , start_date = '01/01/2020' ).reset_index().rename(columns={"index": "date"})
+BKX = BKX[['date','close']] #Bank index - method 2
+
 
 UNRATE = fred.get_series_all_releases('UNRATE')
 fast_filter = (UNRATE.date >= '2020-01-01')
@@ -68,30 +78,33 @@ GDPC1 = GDPC1[fast_filter] #Real Gross Domestic Product
 
 ###Bank Economy Watch
 
-USNIM = fred.get_series_all_releases('USNIM')
-fast_filter = (USNIM.date >= '2020-01-01')
+USNIM = fred.get_series('USNIM').to_frame().reset_index()
+USNIM = USNIM.rename(columns={"index": "date", USNIM.columns[1]: "value"})
+fast_filter = (USNIM.date >= '2019-01-01')
 USNIM = USNIM[fast_filter] #Net Interest Margin for all U.S. Banks 
 
-USNINC = fred.get_series_all_releases('USNINC')
-fast_filter = (USNINC.date >= '2020-01-01')
+USNINC = fred.get_series('USNINC').to_frame().reset_index()
+USNINC = USNINC.rename(columns={"index": "date", USNINC.columns[1]: "value"})
+fast_filter = (USNINC.date >= '2019-01-01')
 USNINC = USNINC[fast_filter] #Net Income for Commercial Banks in United States 
 
-DDSI01USA645NWDB = fred.get_series_all_releases('DDSI01USA645NWDB')
-fast_filter = (DDSI01USA645NWDB.date >= '2020-01-01')
-DDSI01USA645NWDB = DDSI01USA645NWDB[fast_filter] #Bank Z-Score for United States
 
-DRCLACBS = fred.get_series_all_releases('DRCLACBS')
-fast_filter = (DRCLACBS.date >= '2020-01-01')
-DRCLACBS = DRCLACBS[fast_filter] #Delinquency Rate on Consumer Loans, All Commercial Banks 
+DRALACBS = fred.get_series('DRALACBS').to_frame().reset_index()
+DRALACBS = DRALACBS.rename(columns={"index": "date", DRALACBS.columns[1]: "value"})
+fast_filter = (DRALACBS.date >= '2019-01-01')
+DRALACBS = DRALACBS[fast_filter]  #Delinquency Rate on All Loans, All Commercial Banks
+
 
 RESBALNS = fred.get_series_all_releases('RESBALNS')
 fast_filter = (RESBALNS.date >= '2020-01-01')
 RESBALNS = RESBALNS[fast_filter] #Total Reserve Balances Maintained with Federal Reserve Banks
 
 
-USLLRTL = fred.get_series_all_releases('USLLRTL')
-fast_filter = (USLLRTL.date >= '2020-01-01')
+USLLRTL = fred.get_series('USLLRTL').to_frame().reset_index()
+USLLRTL = USLLRTL.rename(columns={"index": "date", USLLRTL.columns[1]: "value"})
+fast_filter = (USLLRTL.date >= '2019-01-01')
 USLLRTL = USLLRTL[fast_filter] #Loan Loss Reserve to Total Loans for all U.S. Banks
+
 
 CASACBW027SBOG = fred.get_series_all_releases('CASACBW027SBOG')
 fast_filter = (CASACBW027SBOG.date >= '2020-01-01')
@@ -121,7 +134,7 @@ EXHOSLUSM495S = fred.get_series('EXHOSLUSM495S').to_frame().reset_index()
 EXHOSLUSM495S = EXHOSLUSM495S.rename(columns={"index": "date", EXHOSLUSM495S.columns[1]: "value"})
 fast_filter = (EXHOSLUSM495S.date >= '2020-01-01')
 EXHOSLUSM495S = EXHOSLUSM495S[fast_filter] 
-EXHOSLUSM495S
+#EXHOSLUSM495S
 
 MSACSR = fred.get_series_all_releases('MSACSR') 
 fast_filter = (MSACSR.date >= '2020-01-01')
@@ -147,6 +160,15 @@ CPIAUCSL = fred.get_series_all_releases('CPIAUCSL')
 fast_filter = (CPIAUCSL.date >= '2020-01-01')
 CPIAUCSL = CPIAUCSL[fast_filter] #   Consumer Price Index for All Urban Consumers: All Items in U.S. City Average
 
+#A PPI from the commodity classification system measures change in
+# prices received for a product or service regardless of industry of origin.
+#  It organizes products by similarity, end use, or material composition.
+# another Inflation watch:
+PPIACO = fred.get_series_all_releases('PPIACO') 
+fast_filter = (PPIACO.date >= '2020-01-01')
+PPIACO = PPIACO[fast_filter] #  Producer Price Index for All Commodities
+
+
 
 #Bank Factors Data
 FEDFUNDS = fred.get_series_all_releases('FEDFUNDS') 
@@ -163,21 +185,62 @@ EXCSRESNW = EXCSRESNW[fast_filter] #  Excess Reserves of Depository Institutions
 
 
 
-#Live Stock Prices
+#getting dates for % change analysis on the stocks
+#dates2 are used in order to get a value when a particular date does not exist. This will give you a range of dates and select the earliest available one.
+todays_date = date.today() 
+todays_date2 = date.today() + timedelta(days=-3)
+
+seven_days_back = todays_date + timedelta(days=-7)
+seven_days_back2 = todays_date + timedelta(days=-13)
+
+thirty_days_back =  todays_date + timedelta(days=-30)
+thirty_days_back2 =  todays_date + timedelta(days=-35)
+
+six_months_back =   todays_date + timedelta(days=-180)
+six_months_back2 =   todays_date + timedelta(days=-185)
+
+one_year_back =   todays_date + timedelta(days=-365)
+one_year_back2 =   todays_date + timedelta(days=-370)
+
+three_years_back = todays_date + timedelta(days=-1095)
+three_years_back2 = todays_date + timedelta(days=-1100)
+
+
+
+#had to create this because sometimes the respective date does not exist, so we need to get a range of dates near and select the first. 
+def stock_back_date_value (ticker,date_start,date_end):
+    return get_data(ticker , start_date = date_end , end_date = date_start).get('close').to_frame().reset_index().sort_values('index', ascending=False).iloc[0,1]
+
+
+
+#Stock Prices Data
+
 def get_stock_data(ticker, metric_type):
     '''
     NOTES:
     STOCK_LIVE = round(si.get_live_price("FRC"),2)
     STOCK_PREV = round(si.get_quote_table('FRC').get('Previous Close'),2)
     FRC_CHG = round((FRC_STOCK_LIVE - FRC_STOCK_PREV) / (FRC_STOCK_PREV) * 100,2)
-
+    
     '''
+
+
     if metric_type == 'live':
         return round(si.get_live_price(ticker),2)
     if metric_type == 'prev':
          return round(si.get_quote_table(ticker).get('Previous Close'),2)
-    if metric_type == 'perc_chg':
+    if metric_type == 'perc_chg_1_day':
          return round((round(si.get_live_price(ticker),2) - round(si.get_quote_table(ticker).get('Previous Close'),2)) / (round(si.get_quote_table(ticker).get('Previous Close'),2)) * 100,2)
+    if metric_type == 'seven_days_back':
+        return round((round(si.get_live_price(ticker),2) - stock_back_date_value(ticker,seven_days_back,seven_days_back2) ) / (stock_back_date_value(ticker,seven_days_back,seven_days_back2)) * 100,2)
+    if metric_type == 'thirty_days_back':
+        return round((round(si.get_live_price(ticker),2) - stock_back_date_value(ticker,thirty_days_back,thirty_days_back2) ) / (stock_back_date_value(ticker,thirty_days_back,thirty_days_back2)) * 100,2)
+    if metric_type == 'six_months_back':
+        return round((round(si.get_live_price(ticker),2) - stock_back_date_value(ticker,six_months_back,six_months_back2) ) / (stock_back_date_value(ticker,six_months_back,six_months_back2)) * 100,2)
+    if metric_type == 'one_year_back':
+        return round((round(si.get_live_price(ticker),2) - stock_back_date_value(ticker,one_year_back,one_year_back2) ) / (stock_back_date_value(ticker,one_year_back,one_year_back2)) * 100,2)
+    if metric_type == 'three_years_back':
+        return round((round(si.get_live_price(ticker),2) - stock_back_date_value(ticker,three_years_back,three_years_back2) ) / (stock_back_date_value(ticker,three_years_back,three_years_back2)) * 100,2)
 
 
 def color_picker(value_input):
@@ -245,7 +308,7 @@ fig2.add_trace(
 )
 
 fig2.add_trace(
-    go.Scatter(x=xlf_bank_index['date'], y=xlf_bank_index['close'], name="Banks", line=dict(color= '#1CA8DD'), fill='tozeroy', fillcolor='rgba(28,168,221, 0.8)', opacity=0.8,),
+    go.Scatter(x=BKX['date'], y=BKX['close'], name="Banks", line=dict(color= '#1CA8DD'), fill='tozeroy', fillcolor='rgba(28,168,221, 0.8)', opacity=0.8,),
     secondary_y=True,
 )
 
@@ -293,23 +356,35 @@ app.layout = html.Div( style={'padding-top': '10px',} , children=[
 
         html.Div([
         html.H2(f'FRC ${get_stock_data("FRC", "live")}'),
-        html.H4(f'{get_stock_data("FRC", "perc_chg")}%', style={'color': f'{color_picker(get_stock_data("FRC", "perc_chg"))}'}),
+        html.H4(f'{get_stock_data("FRC", "perc_chg_1_day")}%', style={'color': f'{color_picker(get_stock_data("FRC", "perc_chg_1_day"))}'}),
+        html.H6(f'7 days: {get_stock_data("FRC", "seven_days_back")}%', style={'color': f'{color_picker(get_stock_data("FRC", "seven_days_back"))}'}),
+        html.H6(f'30 days: {get_stock_data("FRC", "thirty_days_back")}%', style={'color': f'{color_picker(get_stock_data("FRC", "thirty_days_back"))}'}),
+        html.H6(f'6 Mons: {get_stock_data("FRC", "six_months_back")}%', style={'color': f'{color_picker(get_stock_data("FRC", "six_months_back"))}'}),
+        html.H6(f'1 Yr: {get_stock_data("FRC", "one_year_back")}%', style={'color': f'{color_picker(get_stock_data("FRC", "one_year_back"))}'}),
+        html.H6(f'3 Yrs: {get_stock_data("FRC", "three_years_back")}%', style={'color': f'{color_picker(get_stock_data("FRC", "three_years_back"))}'}),
+
         ], className="two columns", style=stock_ticker_style),
 
         html.Div([
         html.H2(f'JPM ${get_stock_data("JPM", "live")}'),
-        html.H4(f'{get_stock_data("JPM", "perc_chg")}%', style={'color': f'{color_picker(get_stock_data("JPM", "perc_chg"))}'}),
+        html.H4(f'{get_stock_data("JPM", "perc_chg_1_day")}%', style={'color': f'{color_picker(get_stock_data("JPM", "perc_chg_1_day"))}'}),
+        html.H6(f'7 days: {get_stock_data("JPM", "seven_days_back")}%', style={'color': f'{color_picker(get_stock_data("JPM", "seven_days_back"))}'}),
+        html.H6(f'30 days: {get_stock_data("JPM", "thirty_days_back")}%', style={'color': f'{color_picker(get_stock_data("JPM", "thirty_days_back"))}'}),
+        html.H6(f'6 Mons: {get_stock_data("JPM", "six_months_back")}%', style={'color': f'{color_picker(get_stock_data("JPM", "six_months_back"))}'}),
+        html.H6(f'1 Yr: {get_stock_data("JPM", "one_year_back")}%', style={'color': f'{color_picker(get_stock_data("JPM", "one_year_back"))}'}),
+        html.H6(f'3 Yrs: {get_stock_data("JPM", "three_years_back")}%', style={'color': f'{color_picker(get_stock_data("JPM", "three_years_back"))}'}),
+
         ], className="two columns", style=stock_ticker_style),
 
         html.Div([
         html.H2(f'BAC ${get_stock_data("BAC", "live")}'),
-        html.H4(f'{get_stock_data("BAC", "perc_chg")}%', style={'color': f'{color_picker(get_stock_data("BAC", "perc_chg"))}'}),
+        html.H4(f'{get_stock_data("BAC", "perc_chg_1_day")}%', style={'color': f'{color_picker(get_stock_data("BAC", "perc_chg_1_day"))}'}),
         ], className="two columns", style=stock_ticker_style),
 
 
         html.Div([
         html.H2(f'WFC ${get_stock_data("WFC", "live")}'),
-        html.H4(f'{get_stock_data("WFC", "perc_chg")}%', style={'color': f'{color_picker(get_stock_data("WFC", "perc_chg"))}'}),
+        html.H4(f'{get_stock_data("WFC", "perc_chg_1_day")}%', style={'color': f'{color_picker(get_stock_data("WFC", "perc_chg_1_day"))}'}),
         ], className="two columns", style=stock_ticker_style),
 
 
@@ -434,14 +509,23 @@ dcc.Graph(
 #ROW BANK ECONOMY WATCH:
 
 html.Div([
+html.H3('Bank Economy Watch', style={'text-align': 'center'}),
+] , className="row", style={'textAlign': 'center', "width": "100%", "display": "flex", "align-items": "center", "justify-content": "center" }),
 
 html.Div([
-
-html.H3('Bank Economy Watch', style={'text-align': 'center'}),
 html.H5("""blah blah b lah blahj fpoksdnfg poksndg odshg pdsfngop dshg;kdshidsf;gj dskgnsdkng;dfkjgdfg
 dfjkngdsflkjng dsjng ldsjgdl skg sdlkjngldksjgnlas;f dsjknflsda flkasjnfliasdbflasjibflasijfbasdfsdkjafbh 
 nsdfkjsdb fkjsb fsadjbf lasjbflksajbdfaisjbfoaisdfosdfho saifiawfjewibfiuawfliaw fusb fuisw faewb kjhvku.""", style={'text-align': 'center'}),
 
+] , className="row", style={'textAlign': 'center', "width": "100%", "display": "flex", "align-items": "center", "justify-content": "center" }),
+
+html.Div([
+
+    
+
+
+
+html.Div([
 
 
 
@@ -464,7 +548,8 @@ html.Div([
                }
        
           )
-          ], className="threehalf columns"),   
+          ], className="five columns"),   
+
 
 html.Div([
 dcc.Graph(
@@ -484,27 +569,7 @@ dcc.Graph(
                }
        
           )
-          ], className="threehalf columns"),   
-
-html.Div([
-dcc.Graph(
-        id='DDSI01USA645NWDB',
-        figure={
-            'data': [
-                     { "x": DDSI01USA645NWDB['date'],"y": DDSI01USA645NWDB['value'],"mode": "lines","name": 'Z-Score', 'line': {'color': '#1CA8DD'}},    
-                    ],
-            'layout': {
-                'title': 'Bank Z-Score for United States',
-                "paper_bgcolor": "rgb(46, 54, 65)",
-                "plot_bgcolor": "rgb(46, 54, 65)",
-                'font': {'color': "rgb(255,255,255)"},
-                'tickangle': '90',
-
-                    }
-               }
-       
-          )
-          ], className="threehalf columns"),   
+          ], className="five columns"),   
 
 
 
@@ -512,7 +577,7 @@ dcc.Graph(
 
 
 
-          ], ),   
+          ],  className="row", style={'textAlign': 'center', "width": "100%", "display": "flex", "align-items": "center", "justify-content": "center" } ),   
 
 
 ] , className="row", style={'textAlign': 'center', "width": "100%", "display": "flex", "align-items": "center", "justify-content": "center" }),
@@ -533,13 +598,13 @@ html.Div([
 
 html.Div([
  dcc.Graph(
-        id='DRCLACBS',
+        id='DRALACBS',
         figure={
             'data': [
-                     { "x": DRCLACBS['date'],"y": DRCLACBS['value'],"mode": "lines","name": 'Rate', 'line': {'color': '#1CA8DD'}},    
+                     { "x": DRALACBS['date'],"y": DRALACBS['value'],"mode": "lines","name": 'Rate', 'line': {'color': '#1CA8DD'}},    
                     ],
             'layout': {
-                'title': 'Delinq. Rate on Consumer Loans ',
+                'title': 'Delinq. Rate on All Loans',
                 "paper_bgcolor": "rgb(46, 54, 65)",
                 "plot_bgcolor": "rgb(46, 54, 65)",
                 'font': {'color': "rgb(255,255,255)"},
@@ -629,7 +694,7 @@ dcc.Graph(
                }
        
           )
-          ], className="two columns"),   
+          ], className="twelve columns"),   
 
 html.Div([
 dcc.Graph(
@@ -649,7 +714,7 @@ dcc.Graph(
                }
        
           )
-          ], className="two columns"),   
+          ], className="twelve columns"),   
 
 
 
