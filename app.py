@@ -18,9 +18,10 @@ get_ipython().run_line_magic('matplotlib', 'inline')
 from yahoo_fin import stock_info as si
 from yahoo_fin.stock_info import *
 
-#e U.S. Department of Labor API
-from pydol import DOLAPI
-DOL = DOLAPI(config.dep_labor_code)
+# U.S. Department of Labor API
+from blsconnect import RequestBLS, bls_search
+bls = RequestBLS(key=config.dep_labor_api_key)
+
 
 #Plotly Dash components 
 import jupyterlab_dash
@@ -61,10 +62,20 @@ xlf_bank_index #SP500 financial stocks - method 1
 BKX = get_data('^BKX' , start_date = '01/01/2020' ).reset_index().rename(columns={"index": "date"})
 BKX = BKX[['date','close']] #Bank index - method 2
 
+#Unemployment rate from FRED (not updated as frequently)
+#UNRATE = fred.get_series_all_releases('UNRATE')
+#fast_filter = (UNRATE.date >= '2020-01-01')
+#UNRATE = UNRATE[fast_filter] #Unemployment Rate 
 
-UNRATE = fred.get_series_all_releases('UNRATE')
-fast_filter = (UNRATE.date >= '2020-01-01')
-UNRATE = UNRATE[fast_filter] #Unemployment Rate   
+#UNEMPLOYMENT from BLS
+series_names = bls_search(data="ur", sa=True)
+UNRATE = bls.series(series_names, start_year=2019, end_year=2020)
+UNRATE['date'] = UNRATE['year'].astype(str)  + UNRATE['period'].str.replace('M','',regex=True)
+UNRATE['date'] = pd.to_datetime(UNRATE['date'], format='%Y%m', errors='coerce').dropna()
+UNRATE = UNRATE.rename(columns={'LNS14000000':'value'})
+
+
+
 
 M2V = fred.get_series_all_releases('M2V')
 fast_filter = (M2V.date >= '2019-01-01')
